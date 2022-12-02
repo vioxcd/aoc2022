@@ -2,7 +2,7 @@ package day2
 
 import scala.io.Source
 
-object Day2 {
+object Main {
   enum RPS:
     case Rock
     case Paper
@@ -69,10 +69,10 @@ object Day2 {
         case (WDL.Lose, RPS.Scissors) => RPS.Paper
         case (WDL.Draw, _)            => opp
 
-  def run(): Unit =
+  def main(args: Array[String]): Unit =
     val testCase =
       Source
-        .fromFile(getClass.getResource("/input2").getFile)
+        .fromFile(getClass.getResource("/input").getFile)
         .getLines
         .toSeq
 
