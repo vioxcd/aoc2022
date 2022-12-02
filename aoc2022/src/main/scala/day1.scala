@@ -2,13 +2,13 @@ package day1
 
 import scala.io.Source
 
-object Main {
+object Day1 {
   case class Elf(elfno: Int, calories: Int)
 
-  def main(args: Array[String]): Unit =
+  def run(): Unit =
     val input =
       Source
-        .fromFile(getClass.getResource("/input").getFile)
+        .fromFile(getClass.getResource("/input1").getFile)
         .getLines
 
     val testCase =

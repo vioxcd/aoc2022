@@ -1,7 +1,7 @@
-package day1
+package aoc2022
 
 import org.scalatest.funsuite.AnyFunSuite
-import day1.Main.Elf
+import day1.Day1.Elf
 
 // https://alvinalexander.com/scala/mill-build-tool/unit-testing-scalatest-dependencies/
 class Day1Suite extends AnyFunSuite {
@@ -29,5 +29,17 @@ class Day1Suite extends AnyFunSuite {
 
   test("the sum of Calories that the top 3 Elfs are carriying are 45000") {
     assert(Main.part2(testInput) == 45000)
+  }
+}
+
+class Day2Suite extends AnyFunSuite {
+  val testInput = List(
+    ("A", "Y"),
+    ("B", "X"),
+    ("C", "Z")
+  )
+
+  test("Following the strategy guide will give a score of 15") {
+    assert(Main.part1(testInput) == 15)
   }
 }
