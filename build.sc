@@ -28,3 +28,10 @@ object day4 extends SbtModule {
     def ivyDeps = Agg(ivy"org.scalatest::scalatest:3.2.9")
   }
 }
+
+object day5 extends SbtModule {
+  def scalaVersion = "3.1.1"
+  object test extends Tests with TestModule.ScalaTest {
+    def ivyDeps = Agg(ivy"org.scalatest::scalatest:3.2.9")
+  }
+}
