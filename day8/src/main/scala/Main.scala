@@ -28,37 +28,42 @@ def inputFileLoader(filename: String): Vector[Vector[Int]] =
     .map(_.map(_.asDigit).toVector)
     .toVector
 
-def calculateNonVisibility(
-    tiles: Vector[Vector[Int]],
-    colLength: Int,
-    rowLength: Int
-): IndexedSeq[Boolean] =
-  val res = for
+case class NWSETrees(
+    treeHeight: Int,
+    N: Vector[Int],
+    W: Vector[Int],
+    S: Vector[Int],
+    E: Vector[Int]
+)
+
+def getNWSETrees(tiles: Vector[Vector[Int]]): IndexedSeq[NWSETrees] =
+  val colLength = tiles(0).length
+  val rowLength = tiles.length
+
+  for
     i <- (1 until colLength - 1)
     j <- (1 until rowLength - 1)
   yield
-    val column  = tiles.map(_(j))
-    val row     = tiles(i)
-    val current = tiles(i)(j)
+    val column        = tiles.map(_(j))
+    val row           = tiles(i)
+    val currentHeight = tiles(i)(j)
 
-    // LTR
-    val fromLeft           = row.slice(0, j)
-    val notVisibleFromLeft = fromLeft.exists(_ >= current)
+    val N = column.slice(0, i).reverse // from tree to top
+    val W = row.slice(0, j).reverse    // from tree to left
+    val S = column.slice(i + 1, rowLength)
+    val E = row.slice(j + 1, colLength)
 
-    // RTL
-    val fromRight           = row.slice(j + 1, colLength)
-    val notVisibleFromRight = fromRight.exists(_ >= current)
+    NWSETrees(currentHeight, N, W, S, E)
 
-    // Top-down
-    val fromTop           = column.slice(0, i)
-    val notVisibleFromTop = fromTop.exists(_ >= current)
-
-    // Bottom-up
-    val fromBottom           = column.slice(i + 1, rowLength)
-    val notVisibleFromBottom = fromBottom.exists(_ >= current)
-
-    notVisibleFromLeft && notVisibleFromRight && notVisibleFromTop && notVisibleFromBottom
-  res
+def calculateTreesVisibility(nwseTrees: IndexedSeq[NWSETrees]): IndexedSeq[Boolean] =
+  // return a list of visible trees (negate the result of non-visibility)
+  for currentTree <- nwseTrees
+  yield
+    val notVisibleFromNorth = currentTree.N.exists(_ >= currentTree.treeHeight)
+    val notVisibleFromWest  = currentTree.W.exists(_ >= currentTree.treeHeight)
+    val notVisibleFromSouth = currentTree.S.exists(_ >= currentTree.treeHeight)
+    val notVisibleFromEast  = currentTree.E.exists(_ >= currentTree.treeHeight)
+    !(notVisibleFromNorth && notVisibleFromWest && notVisibleFromSouth && notVisibleFromEast)
 
 def calculateScenicScore(
     tiles: Vector[Vector[Int]],
@@ -100,10 +105,11 @@ def part1(tiles: Vector[Vector[Int]]): Int =
   val rowLength      = tiles.length
   val edgeItemsCount = ((colLength - 2) * 2) + (rowLength * 2)
 
-  val nonVisibilityList = calculateNonVisibility(tiles, colLength, rowLength)
-  nonVisibilityList
+  val nwseTrees          = getNWSETrees(tiles)
+  val treeVisibilityList = calculateTreesVisibility(nwseTrees)
+  treeVisibilityList
     .groupBy(identity)
-    .mapValues(_.size)(false) + edgeItemsCount // return the visible ones
+    .mapValues(_.size)(true) + edgeItemsCount // return the visible ones
 
 def part2(tiles: Vector[Vector[Int]]): Int =
   val colLength      = tiles(0).length
