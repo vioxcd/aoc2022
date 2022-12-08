@@ -3,19 +3,30 @@ package day8
 import scala.io.Source
 
 @main def main: Unit =
-  val testCase =
-    Source
-      // .fromFile(getClass.getResource("/input").getFile)
-      .fromFile(getClass.getResource("/input_sample").getFile)
-      .getLines
-      .map(_.map(_.asDigit).toVector)
-      .toVector
+  val testCase   = inputFileLoader("/input")
+  val sampleCase = inputFileLoader("/input_sample")
 
-  println(s"--- First input ---")
-  println(part1(testCase))
+  val pt1Sample = part1(sampleCase)
+  val pt1Test   = part1(testCase)
 
-  // println(s"--- Second input ---")
-  // println(part2(testCase))
+  println("--- First case ---")
+  println(s"sample: $pt1Sample")
+  println(s"actual: $pt1Test")
+
+  // val pt2Sample = part2(sampleCase)
+  // val pt2Test   = part2(testCase)
+
+  // println("\n--- Second input ---")
+  // println(s"sample: $pt1Sample")
+  // println(s"actual: $pt1Test")
+
+def inputFileLoader(filename: String): Vector[Vector[Int]] =
+  // return type of this function is modified and customized for each day's input
+  Source
+    .fromFile(getClass.getResource(filename).getFile)
+    .getLines
+    .map(_.map(_.asDigit).toVector)
+    .toVector
 
 def calculateNonVisibility(
     tiles: Vector[Vector[Int]],
