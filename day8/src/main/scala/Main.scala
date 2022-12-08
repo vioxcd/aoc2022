@@ -65,40 +65,26 @@ def calculateTreesVisibility(nwseTrees: IndexedSeq[NWSETrees]): IndexedSeq[Boole
     val notVisibleFromEast  = currentTree.E.exists(_ >= currentTree.treeHeight)
     !(notVisibleFromNorth && notVisibleFromWest && notVisibleFromSouth && notVisibleFromEast)
 
-def calculateScenicScore(
-    tiles: Vector[Vector[Int]],
-    colLength: Int,
-    rowLength: Int
-): IndexedSeq[Int] =
-  val res = for
-    i <- (1 until colLength - 1)
-    j <- (1 until rowLength - 1)
-  yield
-    val column  = tiles.map(_(j))
-    val row     = tiles(i)
-    val current = tiles(i)(j)
+def calculateScenicScore(nwseTrees: IndexedSeq[NWSETrees]): Int =
+  def checkBounds(computed: Vector[Int], source: Vector[Int]): Int =
+    // if length is the same as computed, don't add 1 (don't count last "blocker" tree)
+    if computed.length == source.length then computed.length else computed.length + 1
 
-    val fromLeft   = row.slice(0, j).reverse    // from tree to left
-    val fromRight  = row.slice(j + 1, colLength)
-    val fromTop    = column.slice(0, i).reverse // from tree to top
-    val fromBottom = column.slice(i + 1, rowLength)
+  val scenicScores =
+    for currentTree <- nwseTrees
+    yield
+      val treesInTheNorth = currentTree.N.takeWhile(_ < currentTree.treeHeight)
+      val treesInTheWest  = currentTree.W.takeWhile(_ < currentTree.treeHeight)
+      val treesInTheSouth = currentTree.S.takeWhile(_ < currentTree.treeHeight)
+      val treesInTheEast  = currentTree.E.takeWhile(_ < currentTree.treeHeight)
 
-    val leftTreesUntilBlocked   = fromLeft.takeWhile(_ < current)
-    val rightTreesUntilBlocked  = fromRight.takeWhile(_ < current)
-    val topTreesUntilBlocked    = fromTop.takeWhile(_ < current)
-    val bottomTreesUntilBlocked = fromBottom.takeWhile(_ < current)
+      val northScenicScore = checkBounds(treesInTheNorth, currentTree.N)
+      val westScenicScore  = checkBounds(treesInTheWest, currentTree.W)
+      val southScenicScore = checkBounds(treesInTheSouth, currentTree.S)
+      val eastScenicScore  = checkBounds(treesInTheEast, currentTree.E)
 
-    def checkBounds(computed: Vector[Int], source: Vector[Int]): Int =
-      // if length is the same as computed, don't add 1 (don't count last "blocker" tree)
-      if computed.length == source.length then computed.length else computed.length + 1
-
-    val leftScenicScore   = checkBounds(leftTreesUntilBlocked, fromLeft)
-    val rightScenicScore  = checkBounds(rightTreesUntilBlocked, fromRight)
-    val topScenicScore    = checkBounds(topTreesUntilBlocked, fromTop)
-    val bottomScenicScore = checkBounds(bottomTreesUntilBlocked, fromBottom)
-
-    leftScenicScore * rightScenicScore * topScenicScore * bottomScenicScore
-  res
+      northScenicScore * westScenicScore * southScenicScore * eastScenicScore
+  scenicScores.max
 
 def part1(tiles: Vector[Vector[Int]]): Int =
   val colLength      = tiles(0).length
@@ -116,5 +102,5 @@ def part2(tiles: Vector[Vector[Int]]): Int =
   val rowLength      = tiles.length
   val edgeItemsCount = ((colLength - 2) * 2) + (rowLength * 2)
 
-  val scenicScoreList = calculateScenicScore(tiles, colLength, rowLength)
-  scenicScoreList.max
+  val nwseTrees = getNWSETrees(tiles)
+  calculateScenicScore(nwseTrees)
