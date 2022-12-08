@@ -56,8 +56,8 @@ def calculateTreesVisibility(nwseTrees: IndexedSeq[NWSETrees]): IndexedSeq[Boole
   // return a list of visible trees (negate the result of non-visibility)
   for currentTree <- nwseTrees
   yield !currentTree.NWSE
-    .map(trees => trees.exists(_ >= currentTree.treeHeight))
-    .forall(_ == true)
+    .map(trees => trees.exists(_ >= currentTree.treeHeight)) // exist a tree >= current tree height
+    .forall(_ == true) // if true for all, then it's not visible!
 
 def calculateScenicScore(nwseTrees: IndexedSeq[NWSETrees]): Int =
   def checkBounds(computed: Vector[Int], source: Vector[Int]): Int =
@@ -67,7 +67,7 @@ def calculateScenicScore(nwseTrees: IndexedSeq[NWSETrees]): Int =
   val scenicScores =
     for currentTree <- nwseTrees
     yield currentTree.NWSE
-      .map(trees => (trees, trees.takeWhile(_ < currentTree.treeHeight))) // source, transformed
+      .map(trees => (trees, trees.takeWhile(_ < currentTree.treeHeight))) // while height
       .map((source, transformed) => checkBounds(transformed, source))
       .reduce(_ * _)
   scenicScores.max
