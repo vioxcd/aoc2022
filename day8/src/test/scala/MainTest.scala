@@ -14,4 +14,8 @@ class Day8Suite extends AnyFunSuite {
   test("Number of visible trees are 16 + 5 = 21") {
     assert(part1(testInput) == 21)
   }
+
+  test("Highest scenic score for the set of trees are 8") {
+    assert(part2(testInput) == 8)
+  }
 }

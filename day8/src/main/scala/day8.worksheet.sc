@@ -12,7 +12,7 @@ val colLength      = testCase(0).length
 val rowLength      = testCase.length
 val edgeItemsCount = ((colLength - 2) * 2) + (rowLength * 2)
 
-/** PART 1
+/** PART 2
   */
 val res = for
   i <- (1 until colLength - 1)
@@ -22,22 +22,25 @@ yield
   val row     = testCase(i)
   val current = testCase(i)(j)
 
-  // LTR
-  val fromLeft           = row.slice(0, j)
-  val notVisibleFromLeft = fromLeft.exists(_ >= current)
+  val fromLeft   = row.slice(0, j).reverse    // from tree to left
+  val fromRight  = row.slice(j + 1, colLength)
+  val fromTop    = column.slice(0, i).reverse // from tree to top
+  val fromBottom = column.slice(i + 1, rowLength)
 
-  // RTL
-  val fromRight           = row.slice(j + 1, colLength)
-  val notVisibleFromRight = fromRight.exists(_ >= current)
+  val leftTreesUntilBlocked   = fromLeft.takeWhile(_ < current)
+  val rightTreesUntilBlocked  = fromRight.takeWhile(_ < current)
+  val topTreesUntilBlocked    = fromTop.takeWhile(_ < current)
+  val bottomTreesUntilBlocked = fromBottom.takeWhile(_ < current)
 
-  // Top-down
-  val fromTop           = column.slice(0, i)
-  val notVisibleFromTop = fromTop.exists(_ >= current)
+  def checkBounds(computed: Vector[Int], source: Vector[Int]): Int =
+    // if length is the same as computed, don't add 1 (don't count last "blocker" tree)
+    if computed.length == source.length then computed.length else computed.length + 1
 
-  // Bottom-up
-  val fromBottom           = column.slice(i + 1, rowLength)
-  val notVisibleFromBottom = fromBottom.exists(_ >= current)
+  val leftScenicScore   = checkBounds(leftTreesUntilBlocked, fromLeft)
+  val rightScenicScore  = checkBounds(rightTreesUntilBlocked, fromRight)
+  val topScenicScore    = checkBounds(topTreesUntilBlocked, fromTop)
+  val bottomScenicScore = checkBounds(bottomTreesUntilBlocked, fromBottom)
 
-  notVisibleFromLeft && notVisibleFromRight && notVisibleFromTop && notVisibleFromBottom
+  leftScenicScore * rightScenicScore * topScenicScore * bottomScenicScore
 
-res.groupBy(identity).mapValues(_.size)(false) + edgeItemsCount
+res.max
