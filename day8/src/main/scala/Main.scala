@@ -33,6 +33,11 @@ case class NWSETrees(
     NWSE: Vector[Vector[Int]]
 )
 
+def getEdgesCount(tiles: Vector[Vector[Int]]): Int =
+  val colLength = tiles(0).length
+  val rowLength = tiles.length
+  ((colLength - 2) * 2) + (rowLength * 2)
+
 def getNWSETrees(tiles: Vector[Vector[Int]]): IndexedSeq[NWSETrees] =
   val colLength = tiles(0).length
   val rowLength = tiles.length
@@ -73,10 +78,7 @@ def calculateScenicScore(nwseTrees: IndexedSeq[NWSETrees]): Int =
   scenicScores.max
 
 def part1(tiles: Vector[Vector[Int]]): Int =
-  val colLength      = tiles(0).length
-  val rowLength      = tiles.length
-  val edgeItemsCount = ((colLength - 2) * 2) + (rowLength * 2)
-
+  val edgeItemsCount     = getEdgesCount(tiles)
   val nwseTrees          = getNWSETrees(tiles)
   val treeVisibilityList = calculateTreesVisibility(nwseTrees)
   treeVisibilityList
@@ -84,9 +86,6 @@ def part1(tiles: Vector[Vector[Int]]): Int =
     .mapValues(_.size)(true) + edgeItemsCount // return the visible ones
 
 def part2(tiles: Vector[Vector[Int]]): Int =
-  val colLength      = tiles(0).length
-  val rowLength      = tiles.length
-  val edgeItemsCount = ((colLength - 2) * 2) + (rowLength * 2)
-
-  val nwseTrees = getNWSETrees(tiles)
+  val edgeItemsCount = getEdgesCount(tiles)
+  val nwseTrees      = getNWSETrees(tiles)
   calculateScenicScore(nwseTrees)
