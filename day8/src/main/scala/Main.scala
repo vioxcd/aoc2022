@@ -30,10 +30,7 @@ def inputFileLoader(filename: String): Vector[Vector[Int]] =
 
 case class NWSETrees(
     treeHeight: Int,
-    N: Vector[Int],
-    W: Vector[Int],
-    S: Vector[Int],
-    E: Vector[Int]
+    NWSE: Vector[Vector[Int]]
 )
 
 def getNWSETrees(tiles: Vector[Vector[Int]]): IndexedSeq[NWSETrees] =
@@ -53,17 +50,14 @@ def getNWSETrees(tiles: Vector[Vector[Int]]): IndexedSeq[NWSETrees] =
     val S = column.slice(i + 1, rowLength)
     val E = row.slice(j + 1, colLength)
 
-    NWSETrees(currentHeight, N, W, S, E)
+    NWSETrees(currentHeight, Vector(N, W, S, E))
 
 def calculateTreesVisibility(nwseTrees: IndexedSeq[NWSETrees]): IndexedSeq[Boolean] =
   // return a list of visible trees (negate the result of non-visibility)
   for currentTree <- nwseTrees
-  yield
-    val notVisibleFromNorth = currentTree.N.exists(_ >= currentTree.treeHeight)
-    val notVisibleFromWest  = currentTree.W.exists(_ >= currentTree.treeHeight)
-    val notVisibleFromSouth = currentTree.S.exists(_ >= currentTree.treeHeight)
-    val notVisibleFromEast  = currentTree.E.exists(_ >= currentTree.treeHeight)
-    !(notVisibleFromNorth && notVisibleFromWest && notVisibleFromSouth && notVisibleFromEast)
+  yield !currentTree.NWSE
+    .map(trees => trees.exists(_ >= currentTree.treeHeight))
+    .forall(_ == true)
 
 def calculateScenicScore(nwseTrees: IndexedSeq[NWSETrees]): Int =
   def checkBounds(computed: Vector[Int], source: Vector[Int]): Int =
@@ -72,18 +66,10 @@ def calculateScenicScore(nwseTrees: IndexedSeq[NWSETrees]): Int =
 
   val scenicScores =
     for currentTree <- nwseTrees
-    yield
-      val treesInTheNorth = currentTree.N.takeWhile(_ < currentTree.treeHeight)
-      val treesInTheWest  = currentTree.W.takeWhile(_ < currentTree.treeHeight)
-      val treesInTheSouth = currentTree.S.takeWhile(_ < currentTree.treeHeight)
-      val treesInTheEast  = currentTree.E.takeWhile(_ < currentTree.treeHeight)
-
-      val northScenicScore = checkBounds(treesInTheNorth, currentTree.N)
-      val westScenicScore  = checkBounds(treesInTheWest, currentTree.W)
-      val southScenicScore = checkBounds(treesInTheSouth, currentTree.S)
-      val eastScenicScore  = checkBounds(treesInTheEast, currentTree.E)
-
-      northScenicScore * westScenicScore * southScenicScore * eastScenicScore
+    yield currentTree.NWSE
+      .map(trees => (trees, trees.takeWhile(_ < currentTree.treeHeight))) // source, transformed
+      .map((source, transformed) => checkBounds(transformed, source))
+      .reduce(_ * _)
   scenicScores.max
 
 def part1(tiles: Vector[Vector[Int]]): Int =
