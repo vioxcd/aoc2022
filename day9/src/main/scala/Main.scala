@@ -23,19 +23,19 @@ import scala.io.Source
   println(s"sample: $pt2Sample")
   println(s"actual: $pt2Test")
 
-case class Direction(where: String, distance: Int)
+case class Direction(to: String, distance: Int)
 case class Coordinate(x: Int, y: Int)
 
 object Direction:
   def from(s: String): Direction =
-    val where :: distance :: _ = s.split(" ").toList
-    Direction(where, distance.toInt)
+    val to :: distance :: _ = s.split(" ").toList
+    Direction(to, distance.toInt)
 
 def calculatePositionDiff(head: Coordinate, tail: Coordinate): Coordinate =
   Coordinate(head.x - tail.x, head.y - tail.y)
 
 def moveTail(tail: Coordinate, diff: Coordinate): Coordinate =
-  Coordinate(tail.x + diff.x.sign, tail.y + diff.y.sign)
+  Coordinate(tail.x + diff.x.sign, tail.y + diff.y.sign) // sign return -1, 0, or 1. works for this use case!
 
 def calculateTailPosition(head: Coordinate, tail: Coordinate): Coordinate =
   val diff    = calculatePositionDiff(head, tail)
@@ -50,7 +50,7 @@ def calculateTailPosition(head: Coordinate, tail: Coordinate): Coordinate =
 def calculateHeadTracks(directions: List[Direction], head: Coordinate): List[Coordinate] =
   directions.foldLeft(List(head)) { (accum, direction) =>
     val current = accum.takeRight(1)(0)
-    val tracks = direction.where match
+    val tracks = direction.to match
       case "R" => (1 to direction.distance).map(step => Coordinate(current.x + step, current.y)).toList
       case "L" => (1 to direction.distance).map(step => Coordinate(current.x - step, current.y)).toList
       case "U" => (1 to direction.distance).map(step => Coordinate(current.x, current.y + step)).toList
@@ -77,7 +77,7 @@ def part2(directions: List[Direction]): Int =
   val head       = Coordinate(0, 0)
   val tail       = Coordinate(0, 0)
   val headTracks = calculateHeadTracks(directions, head)
-  val tailTracks = (1 to 9).foldLeft(headTracks) { (accum, knotNo) =>
+  val tailTracks = (1 to 9).foldLeft(headTracks) { (accum, _) =>
     calculateTailTracks(accum, tail)
   }
   tailTracks.toSet.size
