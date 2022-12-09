@@ -14,7 +14,22 @@ class Day9Suite extends AnyFunSuite {
     Direction("R", 2)
   )
 
+  val testInputLarger = List(
+    Direction("R", 5),
+    Direction("U", 8),
+    Direction("L", 8),
+    Direction("D", 3),
+    Direction("R", 17),
+    Direction("D", 10),
+    Direction("L", 25),
+    Direction("U", 20)
+  )
+
   test("Number of positions that the tail visited at least once = 13") {
     assert(part1(testInput) == 13)
+  }
+
+  test("Number of positions that the tail visited at least once in larger input (10 knot) = 36") {
+    assert(part2(testInputLarger) == 36)
   }
 }
