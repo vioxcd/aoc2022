@@ -3,23 +3,17 @@ package day10
 import scala.io.Source
 
 @main def main: Unit =
-  val sampleCase = inputFileLoader("/input_sample")
-  val testCase   = inputFileLoader("/input")
+  val testCase = inputFileLoader("/input")
 
-  // println(sampleCase)
+  val registerState = computeRegisterState(testCase)
 
-  // val pt1Sample = part1(sampleCase)
-  // val pt1Test   = part1(testCase)
+  val pt1Test = part1(registerState)
+  val pt2Test = part2(registerState)
 
-  // println("--- First case ---")
-  // println(s"sample: $pt1Sample")
-  // println(s"actual: $pt1Test")
-
-  val pt2Sample = part2(sampleCase)
-  val pt2Test   = part2(testCase)
+  println("--- First case ---")
+  println(s"actual: $pt1Test")
 
   println("\n--- Second input ---")
-  println(s"sample: $pt2Sample")
   println(s"actual: $pt2Test")
 
 enum Input:
@@ -41,8 +35,8 @@ val computeAddx = (currentState: Register, x: Int) =>
   val res2 = compute(res1, x)
   List(res1, res2)
 
-def part1(instructions: List[Input]): Int =
-  val registerRecording = instructions
+def computeRegisterState(instructions: List[Input]): List[Register] =
+  instructions
     .foldLeft(List(Register(0, 1)))((accum, instruction) =>
       val currentState = accum.takeRight(1)(0)
       val newState = instruction match
@@ -51,25 +45,17 @@ def part1(instructions: List[Input]): Int =
       accum ::: newState
     )
 
-  (20 to registerRecording.length by 40)
+def part1(registerState: List[Register]): Int =
+  (20 to registerState.length by 40)
     .map(i =>
-      registerRecording(i).cycle * registerRecording(i - 1).value
+      registerState(i).cycle * registerState(i - 1).value
     ) // the value of the register are the in the previous index
     .sum
 
 // I'm so done
 // https://www.reddit.com/r/adventofcode/comments/zhjfo4/comment/izmuj99/
-def part2(instructions: List[Input]): String =
-  val registerRecording = instructions
-    .foldLeft(List(Register(0, 1)))((accum, instruction) =>
-      val currentState = accum.takeRight(1)(0)
-      val newState = instruction match
-        case Input.Noop    => List(computeNoop(currentState))
-        case Input.Addx(x) => computeAddx(currentState, x)
-      accum ::: newState
-    )
-
-  registerRecording
+def part2(registerState: List[Register]): String =
+  registerState
     .foldLeft(new StringBuilder(240)) { case (sb, r) =>
       if r.value - 1 to r.value + 1 contains r.cycle % 40 then sb.append("#")
       else sb.append(".")
