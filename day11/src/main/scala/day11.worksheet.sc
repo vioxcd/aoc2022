@@ -1,6 +1,9 @@
 import scala.io.Source
 
-val spottyRounding = (x: Int) => if x % 3 == 0 || x % 3 == 1 then x / 3 else (x / 3) + 1
+// import scala.annotation.tailrec
+// @tailrec
+// final def gcd(a: Int, b: Int): Int = if (b == 0) a else gcd(b, a % b)
+// def lcm(a: Int, b: Int): Int       = a / gcd(a, b) * b
 
 case class Monkey(
     no: Int,
@@ -43,28 +46,32 @@ val monkeys = Vector(
   )
 )
 
+// val lcmDivs = monkeys.map(_.divisibility).reduce(lcm)
+// lcmDivs
+
 val inspectionCounter = (0 to 3).map((_, 0)).toMap
 val roundCounter      = RoundCounter(monkeys, inspectionCounter)
 
-val x = (1 to 20).foldLeft(roundCounter) { (counter, round) =>
-  // println(s"Round $round")
+// val x = (1 to 20).foldLeft(roundCounter) { (counter, round) =>
+val x = (1 until 2).foldLeft(roundCounter) { (counter, round) =>
+// println(s"Round $round")
   counter.monkeys.foldLeft(counter) { (accum, monkey) =>
-    // println(s"Monkey ${monkey.no}")
+    println(s"Monkey ${monkey.no}")
     // if monkey.items.length != 0 then
     val currentItems = accum.monkeys(monkey.no).items
     if currentItems.length != 0 then
       val passedItems = for item <- currentItems yield
-        // println(s"Monkey inspects an item with a worry level of $item.")
+        println(s"Monkey inspects an item with a worry level of $item.")
 
         val worryLevel = monkey.newWorriedLevel(item)
-        // println(s"Worry level is multiplied to $worryLevel.")
+        println(s"Worry level is multiplied to $worryLevel.")
 
         val reducedWorryLevel = worryLevel / 3
-        // println(s"Monkey gets bored with item. Worry level is divided by 3 to $reducedWorryLevel.")
+        println(s"Monkey gets bored with item. Worry level is divided by 3 to $reducedWorryLevel.")
 
         val passedTo = monkey.nextMonkeyPassed(reducedWorryLevel)
-        // println(s"Current worry level is not divisible by ${monkey.divisibility}.")
-        // println(s"Item with worry level $reducedWorryLevel is thrown to monkey $passedTo.")
+        println(s"Current worry level is not divisible by ${monkey.divisibility}.")
+        println(s"Item with worry level $reducedWorryLevel is thrown to monkey $passedTo.")
         PassedItem(monkey.no, passedTo, reducedWorryLevel)
 
       val currentMonkeys = passedItems.foldLeft(accum.monkeys) { (acc, item) =>
@@ -80,12 +87,9 @@ val x = (1 to 20).foldLeft(roundCounter) { (counter, round) =>
       print(currentInspectionCounter)
       RoundCounter(currentMonkeys, currentInspectionCounter)
     else
-      // println(s"No items for Monkey ${monkey.no}")
+      println(s"No items for Monkey ${monkey.no}")
       accum
   }
 }
-
-x.monkeys
-x.inspectionCount
 
 x.inspectionCount.values.toList.sorted.takeRight(2).reduce(_ * _)

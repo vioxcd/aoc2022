@@ -1,6 +1,7 @@
 package day11
 
 import scala.io.Source
+import scala.annotation.tailrec
 
 @main def main: Unit =
   val sampleMonkeys = Vector(
@@ -100,28 +101,30 @@ import scala.io.Source
   // println(s"sample: $pt1Sample")
   // println(s"actual: $pt1Test")
 
-  val pt2Sample = part2(sampleMonkeys)
-  // val pt2Test   = part2(testMonkeys)
+  // val pt2Sample = part2(sampleMonkeys)
+  val pt2Test = part2(testMonkeys)
 
   println("\n--- Second input ---")
-  println(s"sample: $pt2Sample")
-  // println(s"actual: $pt2Test")
+  // println(s"sample: $pt2Sample")
+  println(s"actual: $pt2Test")
 
 case class Monkey(
     no: Int,
-    items: List[BigInt],
-    newWorriedLevel: BigInt => BigInt,
-    nextMonkeyPassed: BigInt => Int,
-    divisibility: BigInt
+    items: List[Long],
+    newWorriedLevel: Long => Long,
+    nextMonkeyPassed: Long => Int,
+    divisibility: Long
 )
-case class PassedItem(from: Int, to: Int, worriedLevel: BigInt)
-case class RoundCounter(monkeys: Vector[Monkey], inspectionCount: Map[Int, BigInt])
+case class PassedItem(from: Int, to: Int, worriedLevel: Long)
+case class RoundCounter(monkeys: Vector[Monkey], inspectionCount: Map[Int, Long])
 
-def part1(monkeys: Vector[Monkey]): BigInt =
-  val inspectionCounter: Map[Int, BigInt] = (0 until monkeys.length).map[(Int, BigInt)]((_, 0)).toMap
-  val roundCounter                        = RoundCounter(monkeys, inspectionCounter)
+def part1(monkeys: Vector[Monkey]): Long =
+  // val inspectionCounter: Map[Int, Int] = (0 until monkeys.length).map[(Int, Int)]((_, 0)).toMap
+  val inspectionCounter: Map[Int, Long] = (0 until monkeys.length).map[(Int, Long)]((_, 0)).toMap
+  val roundCounter                      = RoundCounter(monkeys, inspectionCounter)
 
-  val x = (1 to 20).foldLeft(roundCounter) { (counter, round) =>
+  // val x = (1 to 20).foldLeft(roundCounter) { (counter, round) =>
+  val x = (1 until 2).foldLeft(roundCounter) { (counter, round) =>
     // println(s"Round $round")
     counter.monkeys.foldLeft(counter) { (accum, monkey) =>
       // println(s"Monkey ${monkey.no}")
@@ -158,22 +161,27 @@ def part1(monkeys: Vector[Monkey]): BigInt =
         accum
     }
   }
-  x.inspectionCount.values.toList.sorted.takeRight(2).reduce(_ * _)
+  println(x.inspectionCount)
+  println(x.monkeys)
+  x.inspectionCount.values.toList.sorted.takeRight(2).product
 
-def part2(monkeys: Vector[Monkey]): BigInt =
-  val inspectionCounter: Map[Int, BigInt] = (0 until monkeys.length).map[(Int, BigInt)]((_, 0)).toMap
-  val roundCounter                        = RoundCounter(monkeys, inspectionCounter)
+def part2(monkeys: Vector[Monkey]): Long =
+  // https://www.reddit.com/r/adventofcode/comments/zifqmh/comment/izrjg3y/
+  val primeFactor      = monkeys.map(_.divisibility).product
+  val reduceWorryLevel = (x: Long) => x % primeFactor
 
-  println(roundCounter)
+  //
+  val inspectionCounter: Map[Int, Long] = (0 until monkeys.length).map[(Int, Long)]((_, 0)).toMap
+  val roundCounter                      = RoundCounter(monkeys, inspectionCounter)
 
+  // val x = (1 until 2).foldLeft(roundCounter) { (counter, round) =>
   val x = (1 to 10000).foldLeft(roundCounter) { (counter, round) =>
-    println(s"Processing Round $round")
-    counter.monkeys.foldLeft(counter) { (accum, monkey) =>
+    val tmp = counter.monkeys.foldLeft(counter) { (accum, monkey) =>
       val currentItems = accum.monkeys(monkey.no).items
       if currentItems.length != 0 then
         val passedItems = for item <- currentItems yield
           val worryLevel        = monkey.newWorriedLevel(item)
-          val reducedWorryLevel = worryLevel
+          val reducedWorryLevel = reduceWorryLevel(worryLevel)
           val passedTo          = monkey.nextMonkeyPassed(reducedWorryLevel)
           PassedItem(monkey.no, passedTo, reducedWorryLevel)
         val currentMonkeys = passedItems.foldLeft(accum.monkeys) { (acc, item) =>
@@ -186,11 +194,22 @@ def part2(monkeys: Vector[Monkey]): BigInt =
           acc
             .updated(item.from, oldValue + 1)
         }
+        // println(currentItems.length)
+        // println(passedItems.length)
+        // println(currentInspectionCounter)
         RoundCounter(currentMonkeys, currentInspectionCounter)
       else accum
     }
+
+    if round % 1000 == 0 || round == 1 then println(s"$round: ${tmp.inspectionCount}")
+    tmp
   }
-  x.inspectionCount.values.toList.sorted.takeRight(2).reduce(_ * _)
+  print(x.inspectionCount)
+  x.inspectionCount.values.toList.sorted.takeRight(2).product
+
+// @tailrec
+// final def gcd(a: Long, b: Long): Long = if (b == 0) a else gcd(b, a % b)
+// def lcm(a: Long, b: Long): Long       = a / gcd(a, b) * b
 
 def inputFileLoader(filename: String): Iterator[String] =
   Source
