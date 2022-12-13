@@ -1,13 +1,14 @@
 package day12
 
 import scala.io.Source
+import scala.annotation.tailrec
 
 @main def main: Unit =
   val sampleCase = inputFileLoader("/input_sample")
-  // val testCase = inputFileLoader("/input")
+  // val testCase   = inputFileLoader("/input")
 
   val pt1Sample = part1(sampleCase)
-  // val pt1Test = part1(testCase)
+  // val pt1Test   = part1(testCase)
 
   println("--- First case ---")
   println(s"sample: $pt1Sample")
@@ -22,6 +23,7 @@ import scala.io.Source
 
 type Grid = Vector[Vector[Char]]
 case class Coordinate(x: Int, y: Int)
+case class Step(c: Coordinate, count: Int)
 case class State(q: List[Coordinate], v: Set[Coordinate])
 
 def generatePathways(coord: Coordinate): List[Coordinate] =
@@ -59,7 +61,14 @@ def part1(data: List[String]): Int =
     if e.indexOf('S') != -1 then Some(Coordinate(e.indexOf('S'), i)) else None
   }.head
 
-  val testCase = input.updated(start.y, input(start.y).updated(start.x, 'a'))
+  val end = input.zipWithIndex.flatMap { case (e, i) =>
+    if e.indexOf('E') != -1 then Some(Coordinate(e.indexOf('E'), i)) else None
+  }.head
+
+  val tmp = input
+    .updated(start.y, input(start.y).updated(start.x, 'a'))
+  val testCase = tmp
+    .updated(end.y, tmp(end.y).updated(end.x, 'z'))
 
   val colLength = testCase(0).length
   val rowLength = testCase.length
@@ -71,32 +80,41 @@ def part1(data: List[String]): Int =
   def checkFinish = finish(testCase)
   def checkMove   = move(testCase)
 
-  print(s"Start: $start")
+  println(s"Start: $start")
+  println(s"End: $end")
 
-  val res = Iterator
-    .unfold((List(start), state)) { (paths, state) =>
-      if q.isEmpty then None
+  @annotation.tailrec
+  def traverse(g: Grid, q: Seq[Step], v: Set[Coordinate], accumulator: Seq[Step], end: Coordinate): Seq[Step] =
+    if q.isEmpty then accumulator
+    else
+      val next = q.head
+      if next == end then
+        println("Finished!")
+        accumulator :+ Step(next.c, next.count + 1)
 
-      val current :: rest = state.q
-      val v               = state.v + current
-      val x = generatePathways(current)
+      val possiblePaths = generatePathways(next.c)
         .map(checkBounds)
         .flatten
-        .filterNot(v(_))
-        .map(checkMove(current, _))
+        .map(checkMove(next.c, _))
         .flatten
-      val q = rest ::: x
+        .filterNot((c: Coordinate) => v(c))
 
-      if !x.nonEmpty then Some((paths, (paths, State(q, v))))
+      if possiblePaths.isEmpty then
+        println("empty!")
+        traverse(g, q.tail, v + next.c, accumulator, end)
+      else
+        val succ = possiblePaths
+          .map(Step(_, next.count + 1))
+          .toSet
+          .filterNot(q.contains(_))
+        traverse(g, q.tail ++ succ, v + next.c, accumulator :+ next, end)
 
-      val y = x.map(checkFinish).exists(_ == true)
-      if y then
-        println("Finished")
-        None
-      else Some((paths, (paths ::: List(current), State(q, v))))
-    }
-    .toList
-  res.toSet.size - 1
+  def traverseFrom(g: Grid, initial: Step, end: Coordinate) =
+    traverse(g, Seq(initial), Set.empty, Seq.empty, end)
+
+  val res = traverseFrom(input, Step(start, 0), end)
+  println(res)
+  res.takeRight(1).head.count + 1
 
 // def part2(monkeys: Vector[Monkey]): Long =
 //   15
