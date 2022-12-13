@@ -1,9 +1,6 @@
 import scala.io.Source
 
-case class Stepper(s: String, level: Int = 0, index: Int = 0)
-
-val fileName = "/home/uchan/code/fun/aoc2022/day13/src/main/resources/input_extra"
-// val fileName = "/home/uchan/code/fun/aoc2022/day13/src/main/resources/input_sample"
+val fileName = "/home/uchan/code/fun/aoc2022/day13/src/main/resources/input_sample"
 val input = Source
   .fromFile(fileName)
   .getLines
@@ -14,14 +11,6 @@ val testCase = input
   .grouped(2)
   .toList
 
-// val x :: y :: _ = testCase(0)
-// val s1          = Stepper(x.replace(",", ""), 0)
-// val s2          = Stepper(x.replace(",", ""), 0)
-
-// def recur(s1: Stepper, s2: Stepper): Boolean =
-//   if s1.index == s1.s.length || s2.index == s2.s.length then true else false
-
-// recur(s1, s2)
 def checkLift(s: String, i: Int): Boolean =
   println(s"Checking lift for $s $i")
   if s(i + 1) == ']' then true else false
@@ -81,16 +70,3 @@ val res = testCase.foldLeft((0, 1)) { (t, pair) =>
 }
 
 res._1
-
-// val createStepper = (s: String) => Stepper(s, 0)
-
-// def checkCorrectness(pair: List[String]): Int =
-//   val x :: y :: _ = pair
-//   val s1          = x.replace(",", "").drop(1).dropRight(1) andThen createStepper
-//   val s2          = y.replace(",", "").drop(1).dropRight(1) andThen createStepper
-
-//   def recur(s1: Stepper, s2: Stepper): Boolean =
-//     if s1.index == s1.s.length || s2.index == s2.s.length then
-//       true
-//     else
-//       if
