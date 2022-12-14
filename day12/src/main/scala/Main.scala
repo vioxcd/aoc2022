@@ -7,18 +7,18 @@ import scala.annotation.tailrec
   val sampleCase = inputFileLoader("/input_sample")
   val testCase   = inputFileLoader("/input")
 
-  val pt1Sample = part1(sampleCase)
-  val pt1Test   = part1(testCase)
+  // val pt1Sample = part1(sampleCase)
+  // val pt1Test   = part1(testCase)
 
-  println("--- First case ---")
-  println(s"sample: $pt1Sample")
-  println(s"actual: $pt1Test")
+  // println("--- First case ---")
+  // println(s"sample: $pt1Sample")
+  // println(s"actual: $pt1Test")
 
-  // val pt2Sample = part2(sampleCase)
+  val pt2Sample = part2(sampleCase)
   // val pt2Test   = part2(testCase)
 
-  // println("\n--- Second input ---")
-  // println(s"sample: $pt2Sample")
+  println("\n--- Second input ---")
+  println(s"sample: $pt2Sample")
   // println(s"actual: $pt2Test")
 
 type Grid = Vector[Vector[Char]]
@@ -119,26 +119,42 @@ def part1(data: List[String]): Int =
   val res              = traverseFrom(Step(start, 0), getPossiblePaths)
   res(end)
 
-// def part2(data: List[String]): Int =
-//   val (grid, start, end) = prep(data)
-//   val res                = run(grid, start, end)
+def traverseFromAs(
+    q: Seq[Step],
+    accumulator: Map[Coordinate, Int],
+    computePossiblePaths: Coordinate => List[Coordinate]
+): Int =
+  val current       = q.head
+  val possiblePaths = computePossiblePaths(current.c)
+  val pathsCost = possiblePaths
+    .filter(accumulator.isDefinedAt(_))
+    .map(accumulator(_))
+  if pathsCost.nonEmpty then current.count + pathsCost.min
+  else
+    val succ = possiblePaths.filterNot(accumulator.isDefinedAt(_)).map(Step(_, current.count + 1))
+    traverseFromAs(q.tail ++ succ, accumulator + (current.c -> current.count), computePossiblePaths)
 
-//   // consider all a
-//   val allAs = for
-//     y <- 0 to grid.length - 1
-//     x <- 0 to grid(0).length - 1
-//     if grid(y)(x) == 'a'
-//   yield
-//     val current = Coordinate(x, y)
-//     if res.isDefinedAt(current) then res(end) - res(current)
-//   15
+def part2(data: List[String]): Int =
+  val (grid, start, end) = prep(data)
 
-// val lowestElevation = res.foldLeft(0) { (highestCost, m) =>
-//   val (k, v) = m
-//   if grid(k.y)(k.x) == 'a' then if v > highestCost then v else highestCost
-//   else highestCost
-// }
-// res(end) - lowestElevation
+  println(s"Start: $start")
+  println(s"End: $end")
+
+  val getPossiblePaths = paths(grid)
+  val res              = traverseFrom(Step(start, 0), getPossiblePaths)
+
+  val allAs = for
+    y <- 0 to grid.length - 1
+    x <- 0 to grid(0).length - 1
+    if grid(y)(x) == 'a'
+  yield
+    val current = Coordinate(x, y)
+    val res     = traverseFromAs(Seq(Step(current, 0)), res, getPossiblePaths)
+    println(s"current a: $current")
+    println(s"cost to E: ${res}")
+
+  println(allAs)
+  15
 
 def inputFileLoader(filename: String): List[String] =
   Source
