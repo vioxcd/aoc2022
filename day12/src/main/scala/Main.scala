@@ -119,14 +119,17 @@ def part1(data: List[String]): Int =
   val res              = traverseFrom(Step(start, 0), getPossiblePaths)
   res(end)
 
-def part2(data: List[String]): Int =
-  val (grid, end, start) = prep(data) // start, end reversed
-  val reverseGrid        = ('a' to 'z').zip(('a' to 'z').toList.reverse).toMap
+def reverseGrid(grid: Grid): Grid =
+  val mapping = ('a' to 'z').zip(('a' to 'z').toList.reverse).toMap
   val rg = for
     y <- 0 to grid.length - 1
     x <- 0 to grid(0).length - 1
-  yield reverseGrid(grid(y)(x))
-  val reversedGrid: Grid = rg.grouped(grid(0).length).map(_.toVector).toVector
+  yield mapping(grid(y)(x))
+  rg.grouped(grid(0).length).map(_.toVector).toVector
+
+def part2(data: List[String]): Int =
+  val (grid, end, start) = prep(data) // start, end reversed
+  val reversedGrid: Grid = reverseGrid(grid)
 
   println(s"Start: $start")
   println(s"End: $end")
