@@ -4,15 +4,15 @@ import scala.io.Source
 import scala.annotation.tailrec
 
 @main def main: Unit =
-  val sampleCase = inputFileLoader("/input_sample")
-  // val testCase   = inputFileLoader("/input")
+  // val sampleCase = inputFileLoader("/input_sample")
+  val testCase = inputFileLoader("/input")
 
-  val pt1Sample = part1(sampleCase)
-  // val pt1Test   = part1(testCase)
+  // val pt1Sample = part1(sampleCase)
+  val pt1Test = part1(testCase)
 
   println("--- First case ---")
-  println(s"sample: $pt1Sample")
-  // println(s"actual: $pt1Test")
+  // println(s"sample: $pt1Sample")
+  println(s"actual: $pt1Test")
 
   // val pt2Sample = part2(sampleCase)
   // val pt2Test   = part2(testCase)
@@ -25,7 +25,7 @@ case class Coordinate(x: Int, y: Int)
 type Canvas = Vector[Vector[Char]]
 
 def fillCanvasWithRocks(canvas: Canvas, range: List[Int], xy: Int, direction: String): Canvas =
-  println(s"Got $range and $xy")
+  // println(s"Got $range and $xy")
   direction match
     case "up"    => range.foldLeft(canvas)((acc, i) => acc.updated(i, acc(i).updated(xy, '#')))
     case "down"  => range.foldLeft(canvas)((acc, i) => acc.updated(i, acc(i).updated(xy, '#')))
@@ -39,30 +39,24 @@ def initialFallingSpot(canvas: Canvas, sand: Coordinate): Coordinate =
 
 def bounds = (rowLength: Int, colLength: Int) =>
   (drop: Coordinate) =>
-    // println(s"row: $rowLength. col: $colLength")
     if drop.x == -1 ||
       drop.y == -1 ||
       drop.x == colLength ||
       drop.y == rowLength
     then true
     else false
-    // then None
-    // else Some(drop)
 
 def finish = (sandSource: Coordinate) =>
   (fallingSpot: Coordinate) => if fallingSpot == Coordinate(sandSource.x, 0) then true else false
 
-def countSands(canvas: Canvas): Unit =
-  // TODO. change this later to 'o' later
-  val ss = canvas.map(_.filter(_ == '#').length).sum
-  println(ss)
-  ()
+def countSands(canvas: Canvas): Int =
+  canvas.map(_.filter(_ == 'o').length).sum
 
 def getFromCanvas(canvas: Canvas, c: Coordinate): Char = canvas(c.y)(c.x)
 def updateCanvas(canvas: Canvas, c: Coordinate, item: Char): Canvas =
   canvas.updated(c.y, canvas(c.y).updated(c.x, item))
 
-def part1(input: List[String]): Unit =
+def part1(input: List[String]): Int =
   val rocks = input
     .map(_.split("->").toList.map(_.trim))
     .map { (l: List[String]) =>
@@ -78,12 +72,12 @@ def part1(input: List[String]): Unit =
   val sand   = Coordinate(500 - xmin, 0)
   val canvas = Vector.fill(ymax - ymin + 1, xmax - xmin + 1)('.')
 
-  // println(s"xmin: $xmin")
-  // println(s"xmax: $xmax")
-  // println(s"ymin: $ymin")
-  // println(s"ymax: $ymax")
+  println(s"xmin: $xmin")
+  println(s"xmax: $xmax")
+  println(s"ymin: $ymin")
+  println(s"ymax: $ymax")
 
-  def isBounded  = bounds(xmax - xmin, ymax)
+  def isBounded  = bounds(xmax - xmin + 1, ymax + 1) // ! tricky because of `to` and `until` distinction
   def isFinished = finish(sand)
 
   val canvasWithRocks = rocks
@@ -107,46 +101,52 @@ def part1(input: List[String]): Unit =
       println(cvs.map(_.mkString("")).mkString("\n"))
   val printCanvas = canvasPrinter(sand)
 
+  def abyss = (xmax: Int, ymax: Int) =>
+    (leftAhead: Coordinate, rightAhead: Coordinate) =>
+      // ! tricky when floored as in the example
+      if (leftAhead.x < 0 && leftAhead.y == ymax) ||
+        (rightAhead.x == xmax && rightAhead.y >= ymax)
+      then true
+      else false
+  val isAbyss = abyss(xmax - xmin, ymax)
+
   @tailrec
   def simulateSandDrop(
       canvas: Canvas,
       currentDrop: Coordinate,
       fallingSpot: Coordinate
   ): Canvas =
-    println(s"Processing $currentDrop")
+    // println(s"Processing $currentDrop")
     // printCanvas(canvas)
-    if isFinished(fallingSpot) then
+    val ahead      = Coordinate(currentDrop.x, currentDrop.y + 1)
+    val leftAhead  = Coordinate(currentDrop.x - 1, currentDrop.y + 1)
+    val rightAhead = Coordinate(currentDrop.x + 1, currentDrop.y + 1)
+
+    if isAbyss(leftAhead, rightAhead) then
       println("Finished with these canvas")
       printCanvas(canvas)
       canvas
+    else if getFromCanvas(canvas, ahead) == '.' then
+      // println(s"Going ahead! $ahead")
+      simulateSandDrop(canvas, ahead, fallingSpot)
+    else if !isBounded(leftAhead) && getFromCanvas(canvas, leftAhead) == '.' then
+      // println(s"Going left ahead! $leftAhead")
+      simulateSandDrop(canvas, leftAhead, fallingSpot)
+    else if !isBounded(rightAhead) && getFromCanvas(canvas, rightAhead) == '.' then
+      // println(s"Going right  ahead! $rightAhead")
+      simulateSandDrop(canvas, rightAhead, fallingSpot)
     else
-      val ahead      = Coordinate(currentDrop.x, currentDrop.y + 1)
-      val leftAhead  = Coordinate(currentDrop.x - 1, currentDrop.y + 1)
-      val rightAhead = Coordinate(currentDrop.x + 1, currentDrop.y + 1)
-      if isBounded(ahead) then
-        println(s"Rest case by bounds at $currentDrop")
-        val updatedCanvas  = updateCanvas(canvas, currentDrop, 'o')
-        val newFallingSpot = if currentDrop == fallingSpot then fallingSpot.copy(y = fallingSpot.y - 1) else fallingSpot
-        simulateSandDrop(updatedCanvas, newFallingSpot, newFallingSpot)
-      else if getFromCanvas(canvas, ahead) == '.' then
-        println(s"Going ahead! $ahead")
-        simulateSandDrop(canvas, ahead, fallingSpot)
-      else if !isBounded(leftAhead) && getFromCanvas(canvas, leftAhead) == '.' then
-        println(s"Going left ahead! $leftAhead")
-        simulateSandDrop(canvas, leftAhead, fallingSpot)
-      else if !isBounded(rightAhead) && getFromCanvas(canvas, rightAhead) == '.' then
-        println(s"Going right  ahead! $rightAhead")
-        simulateSandDrop(canvas, rightAhead, fallingSpot)
-      else
-        println(s"Rest case at $currentDrop")
-        val updatedCanvas  = updateCanvas(canvas, currentDrop, 'o')
-        val newFallingSpot = if currentDrop == fallingSpot then fallingSpot.copy(y = fallingSpot.y - 1) else fallingSpot
-        simulateSandDrop(updatedCanvas, newFallingSpot, newFallingSpot)
+      // println(s"Rest case at $currentDrop")
+      val updatedCanvas  = updateCanvas(canvas, currentDrop, 'o')
+      val newFallingSpot = if currentDrop == fallingSpot then fallingSpot.copy(y = fallingSpot.y - 1) else fallingSpot
+      simulateSandDrop(updatedCanvas, newFallingSpot, newFallingSpot)
 
   printCanvas(canvasWithRocks)
-  val initialFall = initialFallingSpot(canvasWithRocks, sand)
-  simulateSandDrop(canvasWithRocks, initialFall, initialFall)
-  ()
+  val initialFall  = initialFallingSpot(canvasWithRocks, sand)
+  val resultCanvas = simulateSandDrop(canvasWithRocks, initialFall, initialFall)
+  val sandAmount   = countSands(resultCanvas)
+  println(s"Amount of sand: $sandAmount")
+  sandAmount
 
 def part2(data: List[String]): Int =
   15
