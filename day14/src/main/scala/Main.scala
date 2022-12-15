@@ -129,10 +129,10 @@ def part1(input: List[String]): Int =
     else if getFromCanvas(canvas, ahead) == '.' then
       // println(s"Going ahead! $ahead")
       simulateSandDrop(canvas, ahead, fallingSpot)
-    else if !isBounded(leftAhead) && getFromCanvas(canvas, leftAhead) == '.' then
+    else if getFromCanvas(canvas, leftAhead) == '.' then
       // println(s"Going left ahead! $leftAhead")
       simulateSandDrop(canvas, leftAhead, fallingSpot)
-    else if !isBounded(rightAhead) && getFromCanvas(canvas, rightAhead) == '.' then
+    else if getFromCanvas(canvas, rightAhead) == '.' then
       // println(s"Going right  ahead! $rightAhead")
       simulateSandDrop(canvas, rightAhead, fallingSpot)
     else
