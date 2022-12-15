@@ -12,19 +12,19 @@ val rocks = input
   .map(_.split("->").toList.map(_.trim))
   .map { (l: List[String]) =>
     for s <- l yield s match
-      case s"$x,$y" => (x.toInt, y.toInt)
+      case s"$x,$y" => Coordinate(x.toInt, y.toInt)
       case _        => throw new Exception(s"value $s is not valid input")
   }
 
-type Thing  = (Int, Int)
+case class Coordinate(x: Int, y: Int)
 type Canvas = Vector[Vector[Char]]
 
-val xmin = rocks.map(innerList => innerList.map(_._1).min).min
-val xmax = rocks.map(innerList => innerList.map(_._1).max).max
+val xmin = rocks.map(innerList => innerList.map(_.x).min).min
+val xmax = rocks.map(innerList => innerList.map(_.x).max).max
 val ymin = 0
-val ymax = rocks.map(innerList => innerList.map(_._2).max).max
+val ymax = rocks.map(innerList => innerList.map(_.y).max).max
 
-val sand: Thing = (500 - xmin, 0)
+val sand = Coordinate(500 - xmin, 0)
 
 val canvas = Vector.fill(ymax - ymin + 1, xmax - xmin + 1)('.')
 
@@ -33,14 +33,14 @@ val canvasWithRocks = rocks
   .flatten
   .foldLeft(canvas) { (acc, range) =>
     val from :: to :: _ = range
-    val fromNorm        = (from._1 - xmin, from._2)
-    val toNorm          = (to._1 - xmin, to._2)
+    val fromNorm        = Coordinate(from.x - xmin, from.y)
+    val toNorm          = Coordinate(to.x - xmin, to.y)
     (fromNorm, toNorm) match
-      case (c, n) if c._1 == n._1 && c._2 < n._2 => updateCanvas(acc, (c._2 to n._2).toList, c._1, "up")
-      case (c, n) if c._1 == n._1 && c._2 > n._2 => updateCanvas(acc, (n._2 to c._2).toList, c._1, "down")
-      case (c, n) if c._2 == n._2 && c._1 < n._1 => updateCanvas(acc, (c._1 to n._1).toList, c._2, "right")
-      case (c, n) if c._2 == n._2 && c._1 > n._1 => updateCanvas(acc, (n._1 to c._1).toList, c._2, "left")
-      case (_, _)                                => throw new Exception(s"value $from and $to is not valid")
+      case (c, n) if c.x == n.x && c.y < n.y => updateCanvas(acc, (c.y to n.y).toList, c.x, "up")
+      case (c, n) if c.x == n.x && c.y > n.y => updateCanvas(acc, (n.y to c.y).toList, c.x, "down")
+      case (c, n) if c.y == n.y && c.x < n.x => updateCanvas(acc, (c.x to n.x).toList, c.y, "right")
+      case (c, n) if c.y == n.y && c.x > n.x => updateCanvas(acc, (n.x to c.x).toList, c.y, "left")
+      case (_, _)                            => throw new Exception(s"value $from and $to is not valid")
   }
 
 printCanvas(canvasWithRocks, sand)
@@ -54,41 +54,96 @@ def updateCanvas(canvas: Canvas, range: List[Int], xy: Int, direction: String): 
     case "left"  => range.foldLeft(canvas)((acc, i) => acc.updated(xy, acc(xy).updated(i, '#')))
     case _       => throw new Exception(s"value $direction is not valid")
 
-def printCanvas(canvas: Canvas, sand: Thing): Unit =
-  val cvs = canvas.updated(sand._2, canvas(sand._2).updated(sand._1, '+'))
+def printCanvas(canvas: Canvas, sand: Coordinate): Unit =
+  val cvs = canvas.updated(sand.y, canvas(sand.y).updated(sand.x, '+'))
   println(cvs.map(_.mkString("")).mkString("\n"))
 
-// @tailrec
-def simulateSandDrop(canvas: Canvas, sandSource: Thing, lastDrop: Thing = (-1, -1)): Unit =
-  // if lastDrop == (sandSource._1 - 2, sandSource._2) then
-  //   println("Stop!")
-  //   canvas
-  // else if lastDrop == (-1, -1) then
-  //   println("First time drop!")
-  //   val xs = canvas.map(_(sandSource._2))
-  //   // println(xs)
-  //   // printCanvas(uc, sand)
-  //   val drop = (sandSource._1, xs.indexOf('#') - 1)
-  //   println(drop)
-  //   val uc = canvas.updated(drop._2, canvas(drop._2).updated(drop._1, 'o'))
-  //   simulateSandDrop(canvas, sandSource, drop)
-  // else
-  //   val (x, y) = lastDrop
-  //   if canvas(x - 1)(y) == '.' then
-  //     println(s"Drop left: $lastDrop")
-  //     // canvas.updated(y, canvas(y).updated(x - 1, 'o'))
-  //     val drop = if (sandSource._1 - (x - 1)).abs == 2 then (sandSource._1, y) else (x - 1, y)
-  //     simulateSandDrop(canvas, sandSource, drop)
-  //   else if canvas(x + 1)(y) == '.' then
-  //     println(s"Drop right: $lastDrop")
-  //     // canvas.updated(y, canvas(y).updated(x + 1, 'o'))
-  //     val drop = (x + 1, y)
-  //     simulateSandDrop(canvas, sandSource, drop)
-  //   else if canvas(x)(y - 1) == '.' then
-  //     println(s"Drop top: $lastDrop")
-  //     // canvas.updated(y - 1, canvas(y - 1).updated(x, 'o'))
-  //     val drop = (x, y - 1)
-  //     simulateSandDrop(canvas, sandSource, drop)
+def initialFallingSpot(canvas: Canvas, sand: Coordinate): Coordinate =
+  val ys = canvas.map(_(sand.x)).zipWithIndex.filter(_._1 == '#').head._2
+  Coordinate(sand.x, ys - 1)
+
+initialFallingSpot(canvasWithRocks, sand)
+
+// def bounds = (rowLength: Int, colLength: Int) =>
+//   (drop: Coordinate) =>
+//     println(s"row: $rowLength. col: $colLength")
+//     val (x, y) = drop
+//     if x == -1 ||
+//       y == -1 ||
+//       x == colLength ||
+//       y == rowLength
+//     then None
+//     else Some(drop)
+
+// def checkBounds = bounds(xmax - xmin, ymax)
+
+def finish = (sandSource: Coordinate) =>
+  (fallingSpot: Coordinate) => if fallingSpot == Coordinate(sandSource.x, 1) then true else false
+def checkIsFinished = finish(sand)
+
+def countSands(canvas: Canvas): Unit =
+  // TODO. change this later to 'o' later
+  val ss = canvas.map(_.filter(_ == '#').length).sum
+  println(ss)
   ()
 
-simulateSandDrop(canvasWithRocks, sand)
+// @tailrec
+def simulateSandDrop(canvas: Canvas, currentDrop: Coordinate, fallingSpot: Coordinate): Unit =
+  if checkIsFinished(fallingSpot) then
+    println("Finished with these canvas")
+    println(canvas)
+
+  val ahead = (fallingSpot.x, fallingSpot.y + 1)
+  // if
+  ()
+
+// def detectCollision(canvas: Canvas, drop: Coordinate): Boolean =
+//   val (x, y) = drop
+//   if canvas(y)(x) != '.' then detectCollision(canvas, (x - 1, y))
+//   else if canvas(y)(x - 1) != '.' then detectCollision(canvas, (x + 1, y))
+//   else if canvas(y)(x + 1) != '.' then detectCollision(canvas, (x, y + 1))
+//   else Some((x, y + 1))
+
+// @tailrec
+// def simulateSandDrop(canvas: Canvas, sandSource: Coordinate, lastDrop: Coordinate = (-1, -1)): Canvas =
+//   if canvas(sandSource.y)(sandSource.x + 2) == 'o'
+//     && canvas(sandSource.y)(sandSource.x + 1) == 'o'
+//   then
+//     println("Stop!")
+//     canvas
+//   else if lastDrop == (-1, -1) then
+//     println("First time drop!")
+//     val drop = (sandSource.x, 1)
+//     simulateSandDrop(canvas, sandSource, drop)
+//   else
+//     val (x, y) = lastDrop
+//     if canvas(y)(x) != '.' then
+
+//     simulateSandDrop(canvas, sandSource)
+
+// else if lastDrop == (-1, -1) then
+//   println("First time drop!")
+//   val xs   = canvas.map(_(sandSource.y))
+//   val drop = (sandSource.x, xs.indexOf('#') - 1)
+//   val uc   = canvas.updated(drop.y, canvas(drop.y).updated(drop.x, 'o'))
+//   simulateSandDrop(canvas, sandSource, drop)
+// else
+//   val (x, y) = lastDrop
+//   if canvas(x - 1)(y) == '.' then
+//     println(s"Drop left: $lastDrop")
+//     // canvas.updated(y, canvas(y).updated(x - 1, 'o'))
+//     val drop = if (sandSource.x - (x - 1)).abs == 2 then (sandSource.x, y) else (x - 1, y)
+//     simulateSandDrop(canvas, sandSource, drop)
+//   else if canvas(x + 1)(y) == '.' then
+//     println(s"Drop right: $lastDrop")
+//     // canvas.updated(y, canvas(y).updated(x + 1, 'o'))
+//     val drop = (x + 1, y)
+//     simulateSandDrop(canvas, sandSource, drop)
+//   else if canvas(x)(y - 1) == '.' then
+//     println(s"Drop top: $lastDrop")
+//     // canvas.updated(y - 1, canvas(y - 1).updated(x, 'o'))
+//     val drop = (x, y - 1)
+//     simulateSandDrop(canvas, sandSource, drop)
+// ()
+
+// simulateSandDrop(canvasWithRocks, sand)
